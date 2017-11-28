@@ -24,6 +24,10 @@
 static llvm::LLVMContext TheContext;
 static llvm::IRBuilder<> Builder(TheContext);
 static std::unique_ptr<llvm::Module> TheModule;
+static llvm::Value* data_ptr;
+static int valueArray[255][255];
+static int valueArrayRow = 0;
+static int valueArrayCol = 0;
 
 void emit_move_ptr(llvm::Value* ptr, int diffX, int diffY) {
   Builder.CreateStore(
@@ -32,17 +36,22 @@ void emit_move_ptr(llvm::Value* ptr, int diffX, int diffY) {
         Builder.CreateLoad(ptr),
         Builder.getInt32(diffX+(255*diffY))),
       ptr);
+  valueArrayRow += diffX;
+  valueArrayCol += diffY;
 }
-/*
-void emit_move_ptr_vertical(llvm::Value* ptr, int diff) {
-  Builder.CreateStore(
-      Builder.CreateInBoundsGEP(
-        Builder.getInt8Ty(),
-        Builder.CreateLoad(ptr),
-        Builder.getInt32(diff*255)),
-      ptr);
+
+void emit_index_ptr(llvm::Value* ptr) {
+  // Load rowIndex from first cell and colIndex from next cell
+  //llvm::LoadInst* rowIndex = Builder.CreateLoad(ptr);
+  int moveRow = valueArray[valueArrayRow][valueArrayCol];
+  emit_move_ptr(ptr, 1, 0);
+  int moveCol = valueArray[valueArrayRow][valueArrayCol];
+  //llvm::LoadInst* colIndex = Builder.CreateLoad(ptr);
+  // Reset ptr
+  Builder.CreateStore(data_ptr, ptr);
+  // Move ptr to (rowIndex,colIndex)
+  emit_move_ptr(ptr, moveRow, moveCol);
 }
-*/
 
 void emit_add(llvm::Value* ptr, int diff) {
   llvm::Value* tmp = Builder.CreateLoad(ptr);
@@ -51,6 +60,7 @@ void emit_add(llvm::Value* ptr, int diff) {
         Builder.CreateLoad(tmp),
         Builder.getInt8(diff)),
       tmp);
+  valueArray[valueArrayRow][valueArrayCol] += diff;
 }
 
 void emit_put(llvm::Value* ptr) {
@@ -121,7 +131,7 @@ int main() {
         Builder.getInt8PtrTy(),
         Builder.getInt64Ty(), Builder.getInt64Ty(),
         nullptr));
-  llvm::Value* data_ptr = Builder.CreateCall(funcCalloc, {Builder.getInt64(255*255), Builder.getInt64(1)});
+  data_ptr = Builder.CreateCall(funcCalloc, {Builder.getInt64(255*255), Builder.getInt64(1)});
   Builder.CreateStore(data_ptr, data);
   Builder.CreateStore(data_ptr, ptr);
 
@@ -135,6 +145,7 @@ int main() {
       case '<': emit_move_ptr(ptr, -1, 0); break;
       case '^': emit_move_ptr(ptr, 0, -1); break;
       case 'v': emit_move_ptr(ptr, 0, 1); break;
+      case '*': emit_index_ptr(ptr); break;
       case '+': emit_add(ptr, 1); break;
       case '-': emit_add(ptr, -1); break;
       case '[': emit_while_start(mainFunc, ptr, while_block_ptr++, while_index++); break;
