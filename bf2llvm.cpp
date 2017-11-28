@@ -25,14 +25,24 @@ static llvm::LLVMContext TheContext;
 static llvm::IRBuilder<> Builder(TheContext);
 static std::unique_ptr<llvm::Module> TheModule;
 
-void emit_move_ptr(llvm::Value* ptr, int diff) {
+void emit_move_ptr(llvm::Value* ptr, int diffX, int diffY) {
   Builder.CreateStore(
       Builder.CreateInBoundsGEP(
         Builder.getInt8Ty(),
         Builder.CreateLoad(ptr),
-        Builder.getInt32(diff)),
+        Builder.getInt32(diffX+(255*diffY))),
       ptr);
 }
+/*
+void emit_move_ptr_vertical(llvm::Value* ptr, int diff) {
+  Builder.CreateStore(
+      Builder.CreateInBoundsGEP(
+        Builder.getInt8Ty(),
+        Builder.CreateLoad(ptr),
+        Builder.getInt32(diff*255)),
+      ptr);
+}
+*/
 
 void emit_add(llvm::Value* ptr, int diff) {
   llvm::Value* tmp = Builder.CreateLoad(ptr);
@@ -111,7 +121,7 @@ int main() {
         Builder.getInt8PtrTy(),
         Builder.getInt64Ty(), Builder.getInt64Ty(),
         nullptr));
-  llvm::Value* data_ptr = Builder.CreateCall(funcCalloc, {Builder.getInt64(30000), Builder.getInt64(1)});
+  llvm::Value* data_ptr = Builder.CreateCall(funcCalloc, {Builder.getInt64(255*255), Builder.getInt64(1)});
   Builder.CreateStore(data_ptr, data);
   Builder.CreateStore(data_ptr, ptr);
 
@@ -121,8 +131,10 @@ int main() {
   char c;
   while (std::cin.get(c)) {
     switch (c) {
-      case '>': emit_move_ptr(ptr, 1); break;
-      case '<': emit_move_ptr(ptr, -1); break;
+      case '>': emit_move_ptr(ptr, 1, 0); break;
+      case '<': emit_move_ptr(ptr, -1, 0); break;
+      case '^': emit_move_ptr(ptr, 0, -1); break;
+      case 'v': emit_move_ptr(ptr, 0, 1); break;
       case '+': emit_add(ptr, 1); break;
       case '-': emit_add(ptr, -1); break;
       case '[': emit_while_start(mainFunc, ptr, while_block_ptr++, while_index++); break;
