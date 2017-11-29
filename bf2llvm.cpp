@@ -25,7 +25,7 @@ static llvm::LLVMContext TheContext;
 static llvm::IRBuilder<> Builder(TheContext);
 static std::unique_ptr<llvm::Module> TheModule;
 static llvm::Value* data_ptr;
-static int valueArray[255][255];
+static long long int valueArray[255][255];
 static int valueArrayRow = 0;
 static int valueArrayCol = 0;
 
@@ -41,15 +41,31 @@ void emit_move_ptr(llvm::Value* ptr, int diffX, int diffY) {
 }
 
 void emit_index_ptr(llvm::Value* ptr) {
-  // Load rowIndex from first cell and colIndex from next cell
-  //llvm::LoadInst* rowIndex = Builder.CreateLoad(ptr);
+  // Load rowIndex from first cell and colIndex from next cell using LLVM instructions
+
+  // llvm::Value* rowIndexPtr = Builder.CreateGEP(Builder.getInt32Ty(), ptr, "rowIndexPtr");
+  // llvm::Value* rowIndex = Builder.CreateLoad(rowIndexPtr);
+  // ConstantInt* ciRowIndex = dyn_cast<ConstantInt>(rowIndex);
+  // int iRowIndex = ciRowIndex->getSExtValue();
+
+  // emit_move_ptr(ptr, 1, 0);
+
+  // llvm::Value* colIndexPtr = Builder.CreateGEP(Builder.getInt32Ty(), ptr, "colIndexPtr");
+  // llvm::Value* colIndex = Builder.CreateLoad(colIndexPtr);
+  // ConstantInt* ciColIndex = dyn_case<ConstantInt>(colIndex);
+  // int iColIndex = ciColIndex->getSExtValue();
+
+  // Builder.CreateStore(data_ptr, ptr);
+  // emit_move_ptr(ptr, iRowIndex, iColIndex);
+
+  // Naive approach
   int moveRow = valueArray[valueArrayRow][valueArrayCol];
+
   emit_move_ptr(ptr, 1, 0);
+
   int moveCol = valueArray[valueArrayRow][valueArrayCol];
-  //llvm::LoadInst* colIndex = Builder.CreateLoad(ptr);
-  // Reset ptr
+
   Builder.CreateStore(data_ptr, ptr);
-  // Move ptr to (rowIndex,colIndex)
   emit_move_ptr(ptr, moveRow, moveCol);
 }
 
