@@ -25,7 +25,7 @@ static llvm::LLVMContext TheContext;
 static llvm::IRBuilder<> Builder(TheContext);
 static std::unique_ptr<llvm::Module> TheModule;
 static llvm::Value* data_ptr;
-static long long int valueArray[255][255];
+static int valueArray[255][255];
 static int valueArrayRow = 0;
 static int valueArrayCol = 0;
 
