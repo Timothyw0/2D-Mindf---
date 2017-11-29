@@ -1,4 +1,3 @@
-#!/bin/zsh
 # Run script
 
 #clang++ bf2llvm.o `llvm-config --ldflags --libs` -lpthread -lz -lncurses -ltinfo
